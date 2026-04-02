@@ -1,0 +1,24 @@
+{
+  "name": "capacitor-purchase-example-consumables",
+  "displayName": "ConsumablesExample",
+  "version": "1.0.0",
+  "description": "Capacitor Purchase Plugin — Consumables Example",
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "postinstall": "mkdir -p public && cp node_modules/capacitor-plugin-purchase/www/store.js public/store.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
+    "@capacitor/android": "^6.0.0",
+    "capacitor-plugin-purchase": "file:../../cordova-plugin-purchase/capacitor"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^5.4.0"
+  }
+}

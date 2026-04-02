@@ -1,0 +1,9 @@
+node_modules/
+dist/
+**/public/store.js
+ios/
+android/
+*.apk
+*.ipa
+.DS_Store
+**/src/js/env.ts
