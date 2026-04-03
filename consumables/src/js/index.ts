@@ -174,7 +174,12 @@ function renderUI() {
   const offer = CdvPurchase.store.get(productId, platform as CdvPurchase.Platform)?.getOffer(offerId);
   if (offer) {
     setStatus('Processing...');
-    CdvPurchase.store.order(offer);
+    CdvPurchase.store.order(offer).then(err => {
+      if (err) {
+        setStatus(err.code === 6777006 ? 'Cancelled.' : `Order failed: ${err.message}`);
+        setTimeout(() => setStatus(''), 3000);
+      }
+    });
   }
 };
 
