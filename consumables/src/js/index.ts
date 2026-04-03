@@ -37,6 +37,22 @@ function setStatus(msg: string) {
   if (el) el.textContent = msg;
 }
 
+function appendLog(msg: string) {
+  const el = document.getElementById('log');
+  if (!el) return;
+  el.textContent += new Date().toLocaleTimeString() + ' ' + msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+
+// Capture console.log/warn/error into the visible log
+for (const level of ['log', 'warn', 'error'] as const) {
+  const orig = console[level].bind(console);
+  console[level] = (...args: any[]) => {
+    orig(...args);
+    appendLog(`[${level}] ${args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')}`);
+  };
+}
+
 // ──────────────────────────────────────────────
 // 1. Register products (configured in env.ts)
 // ──────────────────────────────────────────────
@@ -69,7 +85,10 @@ store.validator = iaptic.validator;
 store.error(onStoreError);
 
 store.when()
-  .productUpdated(() => renderUI())
+  .productUpdated((product) => {
+    appendLog(`productUpdated: ${product.id} (${product.offers.length} offers)`);
+    renderUI();
+  })
   .approved(transaction => {
     setStatus('Validating...');
     transaction.verify();
@@ -104,10 +123,16 @@ store.when()
 // ──────────────────────────────────────────────
 // 4. Initialize — connects to the store
 // ──────────────────────────────────────────────
+let storeReady = false;
+appendLog('Initializing store...');
 store.initialize([
   Platform.APPLE_APPSTORE,
   Platform.GOOGLE_PLAY,
-]);
+]).then(() => {
+  storeReady = true;
+  appendLog(`Store ready. ${store.products.length} products, ${store.products.filter(p => p.offers.length > 0).length} with offers.`);
+  renderUI();
+});
 
 renderUI();
 
@@ -122,6 +147,11 @@ function renderUI() {
   if (!productsEl) return;
 
   const validProducts = store.products.filter(p => p.offers.length > 0);
+  if (storeReady && validProducts.length === 0) {
+    productsEl.innerHTML = '<p style="color:red;font-weight:bold">Failed to load any products.</p>'
+      + '<p>Registered: ' + ENV.consumableIds.join(', ') + '</p>';
+    return;
+  }
   productsEl.innerHTML = validProducts.map(p => `<div id="product-${p.id}"></div>`).join('');
   validProducts.forEach(product => {
     const el = document.getElementById(`product-${product.id}`);
@@ -153,6 +183,7 @@ function renderUI() {
 };
 
 function onStoreError(error: CdvPurchase.IError) {
+  appendLog(`ERROR ${error.code}: ${error.message}`);
   const el = document.getElementById('error');
   if (!el) return;
   el.textContent = `ERROR ${error.code}: ${error.message}`;
