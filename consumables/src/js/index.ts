@@ -7,10 +7,9 @@
  *  - Handling the approved → verified → finished lifecycle
  */
 
-import 'capacitor-plugin-purchase';
+import { store, CdvPurchase, Logger, ProductType, Platform, LogLevel } from 'capacitor-plugin-cdv-purchase';
 import { ENV } from './env';
 
-const { store, Logger, ProductType, Platform, LogLevel } = CdvPurchase;
 const log = new Logger({ verbosity: LogLevel.DEBUG }, 'ConsumablesExample');
 
 // ──────────────────────────────────────────────
