@@ -1,1 +1,1 @@
-/// <reference path="../node_modules/capacitor-plugin-purchase/www/store.d.ts" />
+// Types are now provided by the capacitor-plugin-cdv-purchase package exports

@@ -8,10 +8,9 @@
  *  - Displaying subscription status & available offers
  */
 
-import 'capacitor-plugin-purchase';
+import { store, CdvPurchase, Logger, ProductType, Platform, LogLevel, Iaptic } from 'capacitor-plugin-cdv-purchase';
 import { ENV } from './env';
 
-const { store, Logger, ProductType, Platform, LogLevel } = CdvPurchase;
 const log = new Logger({ verbosity: LogLevel.DEBUG }, 'SubscriptionsExample');
 
 // ──────────────────────────────────────────────
@@ -33,7 +32,7 @@ store.applicationUsername = ENV.applicationUsername;
 // ──────────────────────────────────────────────
 // 2. Receipt validation with iaptic (configured in env.ts)
 // ──────────────────────────────────────────────
-const iaptic = new CdvPurchase.Iaptic({
+const iaptic = new Iaptic({
   appName: ENV.iapticAppName,
   apiKey: ENV.iapticApiKey,
   url: ENV.iapticUrl,
