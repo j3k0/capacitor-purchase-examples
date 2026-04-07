@@ -7,3 +7,12 @@ android/
 *.ipa
 .DS_Store
 **/src/js/env.ts
+# AI agent config
+CLAUDE.md
+.claude/
+AGENTS.md
+GEMINI.md
+.cursor/
+.cursorignore
+.copilot/
+lessons/
