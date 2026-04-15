@@ -25,10 +25,21 @@ function getTokens(): number {
 }
 
 function upsertPurchase(transactionId: string, quantity: number) {
-  if (purchases[transactionId]) return false;
-  purchases[transactionId] = { date: new Date().toISOString(), quantity };
-  localStorage.setItem(purchasesKey, JSON.stringify(purchases));
-  return true;
+  log.info(`upsertPurchase(${transactionId}): quantity=${quantity}`)
+  if (purchases[transactionId]) {
+    if (purchases[transactionId].quantity === quantity) {
+      return false;
+    }
+    else {
+      purchases[transactionId].quantity = quantity;
+      return true;
+    }
+  }
+  else {
+    purchases[transactionId] = { date: new Date().toISOString(), quantity };
+    localStorage.setItem(purchasesKey, JSON.stringify(purchases));
+    return true;
+  }
 }
 
 function setStatus(msg: string) {
@@ -89,11 +100,20 @@ store.when()
     renderUI();
   })
   .approved(transaction => {
+    log.info(`transaction approved, for ${transaction.quantity || 1}x ${transaction.products.map(p => p.id).join(', ')}`);
     setStatus('Validating...');
     transaction.verify();
   })
   .verified(receipt => {
     log.info('verified collection: ' + JSON.stringify(receipt.collection));
+
+    function findQuantity(purchase: CdvPurchase.VerifiedPurchase) {
+      // validator returned the quantity
+      if (purchase.quantity) return purchase.quantity;
+      // if not, find the quantity reported by the client SDK for that product
+      const t = receipt.sourceReceipt.transactions.find(t => t.products.some(p => p.id === purchase.id));
+      return t?.quantity || 1;
+    }
 
     // Sync purchases from the verified receipt's collection
     for (const purchase of receipt.collection) {
@@ -106,8 +126,9 @@ store.when()
           localStorage.setItem(purchasesKey, JSON.stringify(purchases));
         }
       } else {
-        if (upsertPurchase(key, 1)) {
-          setStatus('Purchase complete! +1 token');
+        const quantity = findQuantity(purchase);
+        if (upsertPurchase(key, quantity)) {
+          setStatus(`Purchase complete! +${quantity} token`);
         }
       }
     }
@@ -158,9 +179,12 @@ function renderUI() {
     const offers = product.offers.map(offer => {
       const price = offer.pricingPhases[0]?.price || '';
       const buyBtn = offer.canPurchase
-        ? ` <button onclick="orderOffer('${product.platform}','${product.id}','${offer.id}')">Buy</button>`
+        ? ` <button onclick="orderOffer('${product.platform}','${product.id}','${offer.id}', 1)">Buy</button>`
         : '';
-      return `<li>${price}${buyBtn}</li>`;
+      const buyX2Btn = offer.canPurchase && store.checkSupport(offer.platform, 'orderQuantity')
+        ? ` <button onclick="orderOffer('${product.platform}','${product.id}','${offer.id}', 2)">Buy X2</button>`
+        : '';
+      return `<li>${price}${buyBtn}${buyX2Btn}</li>`;
     }).join('');
     el.innerHTML = `<h3>${product.title}</h3>`
       + `<div>${product.description || ''}</div>`
@@ -174,11 +198,11 @@ function renderUI() {
 }
 
 // Expose globally so HTML onclick handlers work
-(window as any).orderOffer = function(platform: string, productId: string, offerId: string) {
+(window as any).orderOffer = function(platform: string, productId: string, offerId: string, quantity: number) {
   const offer = CdvPurchase.store.get(productId, platform as CdvPurchase.Platform)?.getOffer(offerId);
   if (offer) {
     setStatus('Processing...');
-    CdvPurchase.store.order(offer).then(err => {
+    CdvPurchase.store.order(offer, {quantity}).then(err => {
       if (err) {
         setStatus(err.code === 6777006 ? 'Cancelled.' : `Order failed: ${err.message}`);
         setTimeout(() => setStatus(''), 3000);
