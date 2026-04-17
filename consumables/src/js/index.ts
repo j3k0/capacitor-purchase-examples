@@ -216,6 +216,7 @@ function renderUI() {
 };
 
 function onStoreError(error: CdvPurchase.IError) {
+  if (error.code === CdvPurchase.ErrorCode.PAYMENT_CANCELLED) return;
   appendLog(`ERROR ${error.code}: ${error.message}`);
   const el = document.getElementById('error');
   if (!el) return;
