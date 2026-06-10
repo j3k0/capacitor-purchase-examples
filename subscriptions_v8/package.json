@@ -1,8 +1,8 @@
 {
-  "name": "capacitor-purchase-example-subscriptions",
-  "displayName": "SubscriptionsExample",
+  "name": "capacitor-purchase-example-subscriptions-v8",
+  "displayName": "SubscriptionsExampleV8",
   "version": "1.0.0",
-  "description": "Capacitor Purchase Plugin — Subscriptions Example",
+  "description": "Capacitor 8 Purchase Plugin — Subscriptions Example (reproduces issue #1692)",
   "type": "module",
   "scripts": {
     "start": "vite",
@@ -11,9 +11,9 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@capacitor/android": "^8.0.0",
     "@capacitor/core": "^8.0.0",
     "@capacitor/ios": "^8.0.0",
+    "@capacitor/android": "^8.0.0",
     "capacitor-plugin-cdv-purchase": "file:../../cordova-plugin-purchase/capacitor"
   },
   "devDependencies": {
