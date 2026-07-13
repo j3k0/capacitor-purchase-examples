@@ -55,7 +55,8 @@ const offline = new CdvPurchase.OfflineEntitlements(store, {
 let lastOfflineEvent: CdvPurchase.OfflineEntitlementEvent | null = null;
 offline.onEvent((event: CdvPurchase.OfflineEntitlementEvent) => {
   lastOfflineEvent = event;
-  log.info(`offline event: ${event.type} / ${event.productId} / ${event.message}`);
+  // Log line the smoke test greps for — uses store.log so prefix is [CdvPurchase]
+  store.log.info(`offline event: ${event.type} / ${event.productId} / ${event.message}`);
   renderOfflineEvent();
 });
 
@@ -73,17 +74,20 @@ store.when()
   .finished(() => renderUI());
 
 // ──────────────────────────────────────────────
-// 5. Initialize — loads offline cache, connects to the store
+// 5. Initialize — connects to the store, then loads offline cache
 // ──────────────────────────────────────────────
-// Call offline.ready() before initialize() so the cache is loaded
-// and isOwned() can answer immediately, even if the network is down.
+// store.initialize() is called first so that any verified events fired
+// during init update the in-memory cache before we load from storage.
+// offline.ready() loads the persisted cache afterward so isOwned() can
+// answer even if the device is offline. This avoids a race where
+// loadFromStorage() could overwrite freshly-persisted data from onVerified().
+store.initialize([
+  Platform.APPLE_APPSTORE,
+  Platform.GOOGLE_PLAY,
+]);
 offline.ready().then(() => {
   log.info('OfflineEntitlements ready — cache loaded');
   renderOfflineStatus();
-  return store.initialize([
-    Platform.APPLE_APPSTORE,
-    Platform.GOOGLE_PLAY,
-  ]);
 });
 
 renderUI();
@@ -156,8 +160,8 @@ function renderOfflineStatus() {
   // Check offline.isOwned() for each registered product
   const results = ENV.subscriptionIds.map((id: string) => {
     const owned = offline.isOwned(id);
-    // Log line the smoke test greps for
-    log.info(`offline.isOwned('${id}') = ${owned}`);
+    // Log line the smoke test greps for — uses store.log so prefix is [CdvPurchase]
+    store.log.info(`offline.isOwned('${id}') = ${owned}`);
     return `<div>offline.isOwned('${id}') = <strong>${owned}</strong></div>`;
   });
   el.innerHTML = '<h3>Offline Entitlements</h3>' + results.join('');
