@@ -19,7 +19,7 @@ if [ "$PLATFORM" != "ios" ] && [ "$PLATFORM" != "android" ]; then
   exit 1
 fi
 
-EXAMPLES=(subscriptions consumables)
+EXAMPLES=(subscriptions consumables offline)
 
 echo "Building all examples for platform: $PLATFORM"
 echo "=============================================="

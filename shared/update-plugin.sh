@@ -21,7 +21,7 @@ if [ -z "$1" ]; then
 fi
 
 VERSION="$1"
-EXAMPLES=(subscriptions consumables)
+EXAMPLES=(subscriptions consumables offline)
 
 # Determine the value to set in package.json
 if [ -d "$VERSION" ]; then

@@ -1,0 +1,24 @@
+{
+  "name": "capacitor-purchase-example-offline",
+  "displayName": "OfflineEntitlementsExample",
+  "version": "1.0.0",
+  "description": "Capacitor Purchase Plugin — Offline Entitlements Example",
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "build": "vite build",
+    "postinstall": "echo 'done'"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/ios": "^8.0.0",
+    "capacitor-plugin-cdv-purchase": "file:../../cordova-plugin-purchase/capacitor"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^5.4.0"
+  }
+}
