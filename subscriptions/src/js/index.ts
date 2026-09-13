@@ -58,9 +58,11 @@ store.validator = iaptic.validator;
 store.error(onStoreError);
 
 let receiptsReady = false;
+let storeReady = false;
 store.when()
   .receiptsVerified(() => { receiptsReady = true; renderUI(); })
   .productUpdated(() => renderUI())
+  .storefrontUpdated(() => renderUI())
   .approved(transaction => transaction.verify())
   .verified(receipt => receipt.finish())
   .finished(() => renderUI());
@@ -71,7 +73,13 @@ store.when()
 store.initialize([
   Platform.APPLE_APPSTORE,
   Platform.GOOGLE_PLAY,
-]);
+]).then(errors => {
+  // Ids the store did not return surface here (one error per platform), not via
+  // store.error() — without this the zero-product case is silent.
+  errors.forEach(onStoreError);
+  storeReady = true;
+  renderUI();
+});
 
 renderUI();
 
@@ -127,14 +135,20 @@ function renderUI() {
       + `<ul>${offers}</ul>`;
   });
 
-  // Ids the store did not return — the diagnostic that matters for store-config issues.
-  const unavailable = store.products.filter(p => p.offers.length === 0).map(p => p.id);
-  if (unavailable.length)
-    productsEl.innerHTML += `<p id="unavailable">Not available: ${unavailable.join(', ')}</p>`;
+  // A product the store fails to return never enters store.products, so compare the
+  // requested ids against what came back once the store finished loading.
+  if (storeReady) {
+    const unavailable = [...ENV.subscriptionIds, ...(ENV.consumableIds ?? [])]
+      .filter(id => !store.products.some(p => p.id === id));
+    if (unavailable.length) {
+      log.info(`not available: ${unavailable.join(', ')}`);
+      productsEl.insertAdjacentHTML('beforeend', `<p id="unavailable">Not available: ${unavailable.join(', ')}</p>`);
+    }
+  }
 
   const storefrontEl = document.getElementById('storefront');
   const storefront = store.getStorefront();
-  if (storefrontEl) storefrontEl.innerHTML = storefront
+  if (storefrontEl) storefrontEl.innerHTML = storefront?.countryCode
     ? `<p>Store: ${storefront.platform} (${storefront.countryCode})</p>`
     : '<p>Store: unknown</p>';
 }
@@ -162,6 +176,7 @@ function formatDuration(iso: string | undefined): string {
 
 function onStoreError(error: CdvPurchase.IError) {
   if (error.code === CdvPurchase.ErrorCode.PAYMENT_CANCELLED) return;
+  log.error(`store error ${error.code}: ${error.message}`);
   const el = document.getElementById('error');
   if (!el) return;
   el.textContent = `ERROR ${error.code}: ${error.message}`;
