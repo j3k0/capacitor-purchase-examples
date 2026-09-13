@@ -4,6 +4,7 @@
  */
 export const ENV = {
   subscriptionIds: ['monthly_basic', 'yearly_pro'],
+  consumableIds: [] as string[],
   applicationUsername: 'test-user@example.com',
   iapticAppName: 'YOUR_IAPTIC_APP_NAME',
   iapticApiKey: 'YOUR_IAPTIC_API_KEY',

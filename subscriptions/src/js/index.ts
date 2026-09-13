@@ -28,6 +28,17 @@ store.register(ENV.subscriptionIds.flatMap((id: string) => [{
   group: 'default',
 }]));
 
+// Optional consumables (env.ts), so the app doubles as a store check for both types.
+store.register((ENV.consumableIds ?? []).flatMap((id: string) => [{
+  id,
+  type: ProductType.CONSUMABLE,
+  platform: Platform.APPLE_APPSTORE,
+}, {
+  id,
+  type: ProductType.CONSUMABLE,
+  platform: Platform.GOOGLE_PLAY,
+}]));
+
 store.verbosity = LogLevel.DEBUG;
 store.applicationUsername = ENV.applicationUsername;
 
@@ -107,7 +118,7 @@ function renderUI() {
         return `${phase.price} (${cycle}${formatDuration(phase.billingPeriod)})`;
       }).join(' then ');
       const buyBtn = offer.canPurchase
-        ? ` <button onclick="orderOffer('${product.platform}','${product.id}','${offer.id}')">Subscribe</button>`
+        ? ` <button onclick="orderOffer('${product.platform}','${product.id}','${offer.id}')">${product.type === ProductType.PAID_SUBSCRIPTION ? 'Subscribe' : 'Buy'}</button>`
         : '';
       return `<li>${pricing}${buyBtn}</li>`;
     }).join('');
@@ -116,11 +127,16 @@ function renderUI() {
       + `<ul>${offers}</ul>`;
   });
 
+  // Ids the store did not return — the diagnostic that matters for store-config issues.
+  const unavailable = store.products.filter(p => p.offers.length === 0).map(p => p.id);
+  if (unavailable.length)
+    productsEl.innerHTML += `<p id="unavailable">Not available: ${unavailable.join(', ')}</p>`;
+
   const storefrontEl = document.getElementById('storefront');
   const storefront = store.getStorefront();
-  if (storefrontEl && storefront) storefrontEl.innerHTML = `
-    <p>Store: ${storefront.platform} (${storefront.countryCode})</p>
-  `;
+  if (storefrontEl) storefrontEl.innerHTML = storefront
+    ? `<p>Store: ${storefront.platform} (${storefront.countryCode})</p>`
+    : '<p>Store: unknown</p>';
 }
 
 // Expose globally so HTML onclick handlers work
